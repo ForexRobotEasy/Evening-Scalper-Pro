@@ -1,0 +1,122 @@
+
+//+------------------------------------------------------------------+
+//|                                           Evening Scalper Pro.mq5 |
+//|                            Copyright 2022, Forex Robot Easy Team |
+//|                                                            forexroboteasy.com |
+//+------------------------------------------------------------------+
+#property strict
+#property copyright 'Copyright 2022, Forex Robot Easy Team'
+#property link      'forexroboteasy.com'
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Check if the trading session is the American trading session
+    if (TimeCurrent() >= D'19:00:00' && TimeCurrent() <= D'23:00:00')
+    {
+        // Loop through the specified currency pairs
+        string[] symbols = {'EURNZD', 'EURAUD', 'AUDNZD', 'NZDCAD', 'AUDCAD', 'EURGBP', 'GBPAUD', 'GBPCAD'};
+        for (int i = 0; i < ArraySize(symbols); i++)
+        {
+            // Check if it is not the rollover period
+            if (TimeCurrent() < D'00:00:00' || TimeCurrent() > D'01:00:00')
+            {
+                // Execute the scalping strategy
+                ExecuteScalpingStrategy(symbols[i]);
+            }
+        }
+    }
+    return INIT_SUCCEEDED;
+}
+
+//+------------------------------------------------------------------+
+//| Execute the scalping strategy                                    |
+//+------------------------------------------------------------------+
+void ExecuteScalpingStrategy(string symbol)
+{
+    // Determine entry and exit points based on mean-reversion tendency
+    double entryPrice = GetMeanReversionEntry(symbol);
+    double profitTarget = GetProfitTarget(symbol);
+    double stopLoss = GetStopLoss(symbol);
+    
+    // Place market order to enter the market
+    int ticket = OrderSend(symbol, OP_BUY, 0.01, entryPrice, 0, stopLoss, profitTarget, 'Evening Scalper Pro', 0, 0, Green);
+    
+    // Check if the order was placed successfully
+    if (ticket > 0)
+    {
+        // Wait for the order to close
+        while (!IsOrderClosed(ticket))
+        {
+            Sleep(1000);
+        }
+        
+        // Check if the order was closed with profit
+        if (OrderProfit(ticket) > 0)
+        {
+            // Close the order
+            OrderClose(ticket, OrderLots(), Bid, 0, Red);
+        }
+        else
+        {
+            // Close the order
+            OrderClose(ticket, OrderLots(), Bid, 0, Blue);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Get the mean-reversion entry price                                |
+//+------------------------------------------------------------------+
+double GetMeanReversionEntry(string symbol)
+{
+    // Add your logic here to calculate the entry price based on mean-reversion tendency
+    // For simplicity, assume a fixed entry price
+    return MarketInfo(symbol, MODE_ASK) - 0.001;
+}
+
+//+------------------------------------------------------------------+
+//| Get the profit target                                             |
+//+------------------------------------------------------------------+
+double GetProfitTarget(string symbol)
+{
+    // Add your logic here to calculate the profit target based on the mean-reversion tendency
+    // For simplicity, assume a fixed profit target
+    return MarketInfo(symbol, MODE_ASK) + 0.002;
+}
+
+//+------------------------------------------------------------------+
+//| Get the stop loss                                                 |
+//+------------------------------------------------------------------+
+double GetStopLoss(string symbol)
+{
+    // Add your logic here to calculate the stop loss based on the mean-reversion tendency
+    // For simplicity, assume a fixed stop loss
+    return MarketInfo(symbol, MODE_ASK) - 0.003;
+}
+
+//+------------------------------------------------------------------+
+//| Check if the order is closed                                      |
+//+------------------------------------------------------------------+
+bool IsOrderClosed(int ticket)
+{
+    return OrderSelect(ticket, SELECT_BY_TICKET) && OrderCloseTime() > 0;
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Add any necessary deinitialization code here
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Add any necessary tick handling code here
+}
